@@ -15,7 +15,7 @@ Go to the directory, get all of the files, exclude the ones that are likely impo
 Clone the repo, go to the directory and use the python utility:
 
 ```bash
-git clone git:github.com@Esturban/broom.git
+git clone git@github.com:Esturban/broom.git
 cd broom
 python broom.py <directory/with/mess>
 ```
