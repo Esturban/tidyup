@@ -11,11 +11,9 @@ EXCLUDED_FILES = [
     "package.json", "config.toml", "config.json", ".yaml"
 ]
 
-def list_files(files_loc):
-    return [f for f in files_loc.iterdir() if f.is_file() and re.match(r"^[^.][^/]*\.[a-zA-Z0-9]+$", f.name)]
+def list_files(files_loc): return [f for f in files_loc.iterdir() if f.is_file() and re.match(r"^[^.][^/]*\.[a-zA-Z0-9]+$", f.name)]
 
-def filter_files(files):
-    return [f for f in files if f.name not in EXCLUDED_FILES and not any(f.name.endswith(ext) for ext in EXCLUDED_FILES)]
+def filter_files(files): return [f for f in files if f.name not in EXCLUDED_FILES and not any(f.name.endswith(ext) for ext in EXCLUDED_FILES)]
 
 def create_directory(path):
     if not path.exists():
