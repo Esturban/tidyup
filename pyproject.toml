@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel", "setuptools_scm"]
+requires = ["setuptools>=64", "setuptools-scm>=8","wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "tidyup"
-#version = "0.1.2"
+#version = "0.0.1"
 dynamic = ["version"]
 description = "Help keep your files and folders tidy by file type or date"
 authors = [
