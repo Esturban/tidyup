@@ -2,3 +2,5 @@
 **.pyc
 .Rproj.user
 *.code-workspace
+__pycache__
+*.egg-info*
