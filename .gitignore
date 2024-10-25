@@ -1,2 +1,4 @@
 .DS_Store
 **.pyc
+.Rproj.user
+*.code-workspace
