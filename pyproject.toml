@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tidyup"
-#version = "0.0.1"
+#version = "0.0.2"
 dynamic = ["version"]
 description = "Help keep your files and folders tidy by file type or date"
 authors = [
@@ -36,4 +36,4 @@ version = {attr = "tidyup.__version__"}
 
 [tool.setuptools_scm]
 version_scheme = "post-release"
-local_scheme = "node-and-timestamp"
+local_scheme = "no-local-version"
