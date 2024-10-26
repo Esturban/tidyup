@@ -1,4 +1,4 @@
-# Broom 🧹
+# Tidyup 🧹
 
 > Sweep up your files into organized piles for clean up  
 
@@ -12,11 +12,43 @@ Go to the directory, get all of the files, exclude the ones that are likely impo
 
 ## Usage
 
-Clone the repo, go to the directory and use the python utility:
+Install the python utility:
 
 ```bash
-git clone git@github.com:Esturban/broom.git
-cd broom
-python broom.py <directory/with/mess>
+pip install tidyup
 ```
+
+Then get to tidying up 
+
+
+```bash
+#Clean up directory with the structure year/month/extension/file_here.extension
+tidyup -de <directory/with/mess>
+```
+
+## Functionality
+
+```bash
+
+tidyup -h
+usage: tidyup [-h] [-e] [-d] directory
+
+Organize files by extension and/or date.
+
+positional arguments:
+  directory   Directory to organize
+
+options:
+  -h, --help  show this help message and exit
+  -e          Organize by extension
+  -d          Organize by date
+
+Examples:
+  tidyup -e /path/to/dir       Organize by extension
+  tidyup -d /path/to/dir       Organize by date
+  tidyup -ed /path/to/dir      Organize by extension and date
+  tidyup -de /path/to/dir      Organize by date and extension
+```
+
+
 

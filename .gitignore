@@ -1,2 +1,7 @@
 .DS_Store
 **.pyc
+.Rproj.user
+*.code-workspace
+__pycache__
+*.egg-info*
+dist
