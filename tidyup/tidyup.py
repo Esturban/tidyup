@@ -18,15 +18,12 @@ def main():
     
     if not order:
         print("No valid flags provided. Use -e, -d, -ed, -de, or -r.")
-        return
+        sys.exit(1)
     
-    if args.rearrange and args.depth is None:
-        print("Error: If -r is set, -L must also be set.")
-        return
+    if (args.rearrange and args.depth is None) or (args.depth is not None and not args.rearrange):
+        print("Error: -r must be accompanied by -L, and -L must be accompanied by -r.")
+        sys.exit(1)
     
-    if args.depth is not None and not args.rearrange:
-        print("Error: -L must be accompanied by -r.")
-        return
     
     tidy_files(files_loc, order, recursive=True, depth=args.depth) if args.rearrange else tidy_files(files_loc, order)
 
