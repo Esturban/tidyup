@@ -59,6 +59,6 @@ def parse_arguments():
     parser.add_argument("-e", action="store_true", help="Organize by extension")
     parser.add_argument("-d", action="store_true", help="Organize by date")
     parser.add_argument("-r", "--rearrange", action="store_true", help="Rearrange files recursively")
-    parser.add_argument("-L","--depth", type=int, default=2, help="Depth of subdirectory traversal")
+    parser.add_argument("-L","--depth", type=int, help="Depth of subdirectory traversal")
    
     return parser.parse_args()
