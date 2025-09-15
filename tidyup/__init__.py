@@ -1,5 +1,6 @@
 # __init__.py
 from setuptools_scm import get_version
+
 try:
     __version__ = get_version()
 except Exception:
