@@ -43,7 +43,10 @@ def is_eligible_file(file_path: Path) -> bool:
 
 
 def list_files(files_loc: Path) -> list[Path]:
-    return [file_path for file_path in files_loc.iterdir() if is_eligible_file(file_path)]
+    return sorted(
+        (file_path for file_path in files_loc.iterdir() if is_eligible_file(file_path)),
+        key=lambda file_path: file_path.name,
+    )
 
 
 def iter_recursive_files(files_loc: Path, depth: int) -> list[Path]:
@@ -59,7 +62,14 @@ def iter_recursive_files(files_loc: Path, depth: int) -> list[Path]:
         if is_eligible_file(file_path):
             collected.append(file_path)
 
-    return collected
+    return sorted(
+        collected,
+        key=lambda file_path: file_path.relative_to(files_loc).as_posix(),
+    )
+
+
+def discover_files(files_loc: Path, recursive: bool = False, depth: int = 2) -> list[Path]:
+    return iter_recursive_files(files_loc, depth) if recursive else list_files(files_loc)
 
 
 def create_directory(path: Path) -> None:
@@ -95,7 +105,7 @@ def move_file(file_path: Path, dest_dir: Path) -> tuple[bool, str | None]:
 
 
 def tidy_files(files_loc: Path, order: str, recursive: bool = False, depth: int = 2) -> None:
-    all_files = iter_recursive_files(files_loc, depth) if recursive else list_files(files_loc)
+    all_files = discover_files(files_loc, recursive=recursive, depth=depth)
 
     for file_path in all_files:
         dest_dir = files_loc / get_destination(file_path, order)
@@ -138,7 +148,11 @@ def build_parser() -> argparse.ArgumentParser:
         "  tidyup -r -e /path/to/dir               Recursive extension organize (default depth 2)\n"
         "  tidyup -r -d /path/to/dir               Recursive date organize (default depth 2)\n"
         "  tidyup -r -L 3 -e /path/to/dir          Recursive extension organize with explicit depth\n"
-        "  tidyup -r -L 3 -d /path/to/dir          Recursive date organize with explicit depth",
+        "  tidyup -r -L 3 -d /path/to/dir          Recursive date organize with explicit depth\n\n"
+        "Safety notes:\n"
+        "  - Dotfiles and excluded config/workspace files are skipped in all modes.\n"
+        "  - Files are grouped by their final suffix, so archive.tar.gz is treated as .gz.\n"
+        "  - Existing destination files are never overwritten; collisions are skipped and reported.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("directory", type=str, help="Directory to organize")

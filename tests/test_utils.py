@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tidyup.utils import parse_arguments, tidy_files
+from tidyup.utils import discover_files, parse_arguments, tidy_files
 
 
 def test_parse_arguments_accepts_locked_contract_combinations():
@@ -115,6 +115,27 @@ def test_tidy_files_recursive_uses_same_exclusion_rules(tmp_path: Path):
     assert (nested / "config.json").exists()
 
 
+def test_discover_files_has_cross_mode_policy_parity_for_same_scope(tmp_path: Path):
+    top_level = tmp_path / "top.txt"
+    hidden = tmp_path / ".hidden"
+    excluded = tmp_path / "requirements.txt"
+    suffix_excluded = tmp_path / "settings.yaml"
+    no_extension = tmp_path / "LICENSE"
+
+    top_level.write_text("ok")
+    hidden.write_text("hidden")
+    excluded.write_text("reqs")
+    suffix_excluded.write_text("yaml")
+    no_extension.write_text("license")
+
+    top_level_only = discover_files(tmp_path)
+    recursive_same_scope = discover_files(tmp_path, recursive=True, depth=0)
+
+    expected = [top_level]
+    assert top_level_only == expected
+    assert recursive_same_scope == expected
+
+
 def test_tidy_files_enforces_depth_boundary(tmp_path: Path):
     deep = tmp_path / "a" / "b" / "c"
     deep.mkdir(parents=True)
@@ -148,6 +169,31 @@ def test_tidy_files_collision_skips_and_reports(tmp_path: Path, capsys):
     assert destination_file.read_text() == "already there"
 
 
+def test_tidy_files_recursive_collision_is_deterministic(tmp_path: Path, capsys):
+    alpha = tmp_path / "alpha"
+    beta = tmp_path / "beta"
+    alpha.mkdir()
+    beta.mkdir()
+
+    first = alpha / "dup.txt"
+    second = beta / "dup.txt"
+    first.write_text("alpha")
+    second.write_text("beta")
+
+    tidy_files(tmp_path, "-e", recursive=True, depth=2)
+
+    output = capsys.readouterr().out
+    destination = tmp_path / "txt" / "dup.txt"
+
+    assert destination.exists()
+    assert destination.read_text() == "alpha"
+    assert second.exists()
+    assert (
+        f"Skipping {second}: destination already contains dup.txt at {tmp_path / 'txt'}."
+        in output
+    )
+
+
 def test_tidy_files_order_sensitivity_between_de_and_ed(tmp_path: Path):
     timestamp = datetime(2025, 1, 15, 9, 0, 0).timestamp()
     de_root = tmp_path / "de"
@@ -172,3 +218,12 @@ def test_tidy_files_order_sensitivity_between_de_and_ed(tmp_path: Path):
     assert (ed_root / "txt" / "2025" / "01" / "example.txt").exists()
     assert not (de_root / "txt" / "2025" / "01" / "example.txt").exists()
     assert not (ed_root / "2025" / "01" / "txt" / "example.txt").exists()
+
+
+def test_tidy_files_multi_extension_uses_final_suffix(tmp_path: Path):
+    archive = tmp_path / "archive.tar.gz"
+    archive.write_text("archive")
+
+    tidy_files(tmp_path, "-e")
+
+    assert (tmp_path / "gz" / "archive.tar.gz").exists()

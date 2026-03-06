@@ -27,3 +27,6 @@ def test_help_includes_recursive_and_order_examples():
     assert "tidyup -r -e /path/to/dir" in help_text
     assert "tidyup -r -L 3 -e /path/to/dir" in help_text
     assert "tidyup -r -L 3 -d /path/to/dir" in help_text
+    assert "Dotfiles and excluded config/workspace files are skipped in all modes." in help_text
+    assert "archive.tar.gz is treated as .gz" in help_text
+    assert "Existing destination files are never overwritten" in help_text
