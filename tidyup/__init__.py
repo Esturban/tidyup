@@ -1,5 +1,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
+FALLBACK_VERSION = "0.0.4"
+
 
 def _resolve_version() -> str:
     try:
@@ -10,7 +12,7 @@ def _resolve_version() -> str:
 
             return get_version(root="..", relative_to=__file__)
         except Exception:
-            return "0.0.2"
+            return FALLBACK_VERSION
 
 
 __version__ = _resolve_version()
