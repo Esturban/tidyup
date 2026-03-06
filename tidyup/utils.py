@@ -13,6 +13,28 @@ EXCLUDED_FILES = [
     ".yaml",
 ]
 
+README_USAGE = "tidyup [-h] [-e] [-d] [-r] [-L DEPTH] directory"
+
+USAGE_EXAMPLES = [
+    ("tidyup -e /path/to/dir", "Organize by extension"),
+    ("tidyup -d /path/to/dir", "Organize by date"),
+    ("tidyup -ed /path/to/dir", "Organize by extension then date"),
+    ("tidyup -de /path/to/dir", "Organize by date then extension"),
+    ("tidyup -r -e /path/to/dir", "Recursive extension organize (default depth 2)"),
+    ("tidyup -r -d /path/to/dir", "Recursive date organize (default depth 2)"),
+    (
+        "tidyup -r -L 3 -e /path/to/dir",
+        "Recursive extension organize with explicit depth",
+    ),
+    ("tidyup -r -L 3 -d /path/to/dir", "Recursive date organize with explicit depth"),
+]
+
+SAFETY_NOTES = [
+    "Dotfiles and excluded config/workspace files are skipped in all modes.",
+    "Files are grouped by their final suffix, so archive.tar.gz is treated as .gz.",
+    "Existing destination files are never overwritten; collisions are skipped and reported.",
+]
+
 
 class OrderedAxisAction(argparse.Action):
     """Capture axis flags in user-provided order while setting boolean attrs."""
@@ -138,21 +160,14 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
 
 
 def build_parser() -> argparse.ArgumentParser:
+    examples = "\n".join(
+        f"  {command:<40} {description}" for command, description in USAGE_EXAMPLES
+    )
+    safety_notes = "\n".join(f"  - {note}" for note in SAFETY_NOTES)
     parser = argparse.ArgumentParser(
         description="Organize files by extension and/or date.",
-        epilog="Examples:\n"
-        "  tidyup -e /path/to/dir                  Organize by extension\n"
-        "  tidyup -d /path/to/dir                  Organize by date\n"
-        "  tidyup -ed /path/to/dir                 Organize by extension then date\n"
-        "  tidyup -de /path/to/dir                 Organize by date then extension\n"
-        "  tidyup -r -e /path/to/dir               Recursive extension organize (default depth 2)\n"
-        "  tidyup -r -d /path/to/dir               Recursive date organize (default depth 2)\n"
-        "  tidyup -r -L 3 -e /path/to/dir          Recursive extension organize with explicit depth\n"
-        "  tidyup -r -L 3 -d /path/to/dir          Recursive date organize with explicit depth\n\n"
-        "Safety notes:\n"
-        "  - Dotfiles and excluded config/workspace files are skipped in all modes.\n"
-        "  - Files are grouped by their final suffix, so archive.tar.gz is treated as .gz.\n"
-        "  - Existing destination files are never overwritten; collisions are skipped and reported.",
+        usage=README_USAGE,
+        epilog=f"Examples:\n{examples}\n\nSafety notes:\n{safety_notes}",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("directory", type=str, help="Directory to organize")
