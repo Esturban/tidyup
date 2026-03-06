@@ -1,6 +1,6 @@
 from importlib.metadata import PackageNotFoundError, version
 
-FALLBACK_VERSION = "0.0.4"
+FALLBACK_VERSION = "0.0.5"
 
 
 def _resolve_version() -> str:

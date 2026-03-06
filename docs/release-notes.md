@@ -6,6 +6,7 @@
 
 - `import tidyup` no longer depends on `setuptools_scm` being available at runtime.
 - `python -m tidyup -h` is supported in minimal environments after installation.
+- GitHub release signing uses a current Sigstore action so tagged releases no longer fail on deprecated artifact actions.
 
 ### Documentation and test guarantees
 
