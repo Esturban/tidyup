@@ -14,7 +14,7 @@ def test_resolve_version_fallback(monkeypatch):
 
 
 def test_fallback_version_tracks_next_release_target():
-    assert FALLBACK_VERSION == "0.0.4"
+    assert FALLBACK_VERSION == "0.0.5"
 
 
 def test_version_is_non_empty_string():
