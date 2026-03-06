@@ -45,6 +45,13 @@ By default, tidyup excludes:
 - hidden files (dotfiles)
 - names/suffixes in the internal exclusion list (for example `requirements.txt`, `config.json`)
 - files without an extension
+- multi-extension files are grouped by their final suffix (for example `archive.tar.gz` goes to `gz/`)
+
+### Collision Behavior
+
+- tidyup never overwrites an existing destination file
+- if a destination filename already exists, that move is skipped and a message is printed
+- when multiple source files would target the same destination in one run, tidyup processes them in a stable path order so the outcome stays deterministic
 
 ### Examples
 
