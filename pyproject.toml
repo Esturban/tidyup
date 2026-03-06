@@ -12,7 +12,7 @@ authors = [
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.9.1"
-dependencies = ["setuptools_scm"]
+dependencies = []
 keywords = ["utility"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -24,6 +24,10 @@ classifiers = [
 maintainers = [
     { name = "Esteban Valencia", email = "me@estebanvalencia.com" }
 ]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
 [project.scripts]
 tidyup = "tidyup.tidyup:main"
 

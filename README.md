@@ -80,3 +80,13 @@ tidyup -r -L 3 -e /path/to/dir
 # Recursive organize by date at depth 3
 tidyup -r -L 3 -d /path/to/dir
 ```
+
+### Quality Gate
+
+Run the same baseline checks locally that CI uses before release or publishing:
+
+```bash
+python3 -m pip install -e .[test] || python3 -m pip install -e . pytest
+python3 -m pytest -q
+python3 -m tidyup -h
+```
