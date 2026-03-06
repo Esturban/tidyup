@@ -1,54 +1,92 @@
 # Tidyup 🧹
 
-> Sweep up your files into organized piles for clean up  
+> Sweep up your files into organized folders by date and/or extension.
 
-## Description  
+## Description
 
-Simple python utility to clean up project directories from the mess you make while working.  
+`tidyup` helps organize messy directories by moving eligible files into a predictable
+folder structure.
 
-### How it works  
-
-Go to the directory, get all of the files, exclude the ones that are likely important for your project and then create directories in the project by the file extension. Once the directory is made, the files are moved to the file extension directory.
-
-## Usage
-
-Install the python utility:
+## Install
 
 ```bash
 pip install tidyup
 ```
 
-Then get to tidying up 
-
-
-```bash
-#Clean up directory with the structure year/month/extension/file_here.extension
-tidyup -de <directory/with/mess>
-```
-
-## Functionality
+## Usage
 
 ```bash
-
-tidyup -h
-usage: tidyup [-h] [-e] [-d] directory
-
-Organize files by extension and/or date.
-
-positional arguments:
-  directory   Directory to organize
-
-options:
-  -h, --help  show this help message and exit
-  -e          Organize by extension
-  -d          Organize by date
-
-Examples:
-  tidyup -e /path/to/dir       Organize by extension
-  tidyup -d /path/to/dir       Organize by date
-  tidyup -ed /path/to/dir      Organize by extension and date
-  tidyup -de /path/to/dir      Organize by date and extension
+tidyup [-h] [-e] [-d] [-r] [-L DEPTH] directory
 ```
 
+### Options
 
+- `-e`: organize by extension
+- `-d`: organize by file modified date (`year/month`)
+- `-r, --rearrange`: traverse subdirectories recursively
+- `-L, --depth`: recursion depth (valid only with `-r`)
 
+### Ordering Behavior
+
+Order is preserved:
+
+- `-de` => `year/month/extension/file`
+- `-ed` => `extension/year/month/file`
+
+### Recursive Behavior
+
+- `-r` without `-L` defaults to depth `2`
+- `-L` without `-r` is invalid
+
+### Exclusion Behavior
+
+By default, tidyup excludes:
+
+- hidden files (dotfiles)
+- names/suffixes in the internal exclusion list (for example `requirements.txt`, `config.json`)
+- files without an extension
+- multi-extension files are grouped by their final suffix (for example `archive.tar.gz` goes to `gz/`)
+
+### Collision Behavior
+
+- tidyup never overwrites an existing destination file
+- if a destination filename already exists, that move is skipped and a message is printed
+- when multiple source files would target the same destination in one run, tidyup processes them in a stable path order so the outcome stays deterministic
+
+### Examples
+
+```bash
+# Organize top-level files by extension
+tidyup -e /path/to/dir
+
+# Organize top-level files by date
+tidyup -d /path/to/dir
+
+# Organize by extension then date
+tidyup -ed /path/to/dir
+
+# Organize by date then extension
+tidyup -de /path/to/dir
+
+# Recursive organize by date, default depth=2
+tidyup -r -d /path/to/dir
+
+# Recursive organize by extension, default depth=2
+tidyup -r -e /path/to/dir
+
+# Recursive organize by extension at depth 3
+tidyup -r -L 3 -e /path/to/dir
+
+# Recursive organize by date at depth 3
+tidyup -r -L 3 -d /path/to/dir
+```
+
+### Quality Gate
+
+Run the same baseline checks locally that CI uses before release or publishing:
+
+```bash
+python3 -m pip install -e .[test] || python3 -m pip install -e . pytest
+python3 -m pytest -q
+python3 -m tidyup -h
+```
