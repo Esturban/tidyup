@@ -1,9 +1,7 @@
 import argparse
 import shutil
-import re
-import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 EXCLUDED_FILES = [
     ".Rproj",
@@ -16,90 +14,158 @@ EXCLUDED_FILES = [
 ]
 
 
-# List all of the files in the selected location
-def list_files(files_loc):
-    return [
-        f
-        for f in files_loc.iterdir()
-        if f.is_file() and re.match(r"^[^.][^/]*\.[a-zA-Z0-9]+$", f.name)
-    ]
+class OrderedAxisAction(argparse.Action):
+    """Capture axis flags in user-provided order while setting boolean attrs."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        axis_order = getattr(namespace, "axis_order", [])
+        axis_order.append(self.dest)
+        setattr(namespace, "axis_order", axis_order)
+        setattr(namespace, self.dest, True)
 
 
-# Filter out the excluded files
-def filter_files(files):
-    return [
-        f
-        for f in files
-        if f.name not in EXCLUDED_FILES
-        and not any(f.name.endswith(ext) for ext in EXCLUDED_FILES)
-    ]
+def is_eligible_file(file_path: Path) -> bool:
+    if not file_path.is_file():
+        return False
+
+    # Hidden files are excluded by default.
+    if file_path.name.startswith("."):
+        return False
+
+    if file_path.name in EXCLUDED_FILES:
+        return False
+
+    if any(file_path.name.endswith(ext) for ext in EXCLUDED_FILES):
+        return False
+
+    # Only organize files that have at least one extension.
+    return bool(file_path.suffix)
 
 
-# Create the directories
-def create_directory(path):
-    path.mkdir(parents=True) if not path.exists() else None
+def list_files(files_loc: Path) -> list[Path]:
+    return [file_path for file_path in files_loc.iterdir() if is_eligible_file(file_path)]
 
 
-# Move the files from the selected to the output directory
-def move_file(file, dest_dir):
-    shutil.move(str(file), str(dest_dir / file.name))
+def iter_recursive_files(files_loc: Path, depth: int) -> list[Path]:
+    collected: list[Path] = []
+    for file_path in files_loc.rglob("*"):
+        if not file_path.is_file():
+            continue
+
+        relative_depth = len(file_path.relative_to(files_loc).parts) - 1
+        if relative_depth > depth:
+            continue
+
+        if is_eligible_file(file_path):
+            collected.append(file_path)
+
+    return collected
 
 
-# Get the destination directory
-def get_destination(file, order):
+def create_directory(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+
+
+def get_destination(file_path: Path, order: str) -> Path:
     parts = []
+
     for char in order:
         if char == "e":
-            parts.append(file.suffix[1:])
+            parts.append(file_path.suffix[1:])
         elif char == "d":
-            modified_time = datetime.fromtimestamp(file.stat().st_mtime)
-            parts.extend([str(modified_time.year), str(modified_time.month)])
+            modified_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+            parts.extend([str(modified_time.year), f"{modified_time.month:02d}"])
+
     return Path(*parts)
 
 
-# Tidy the files by extension and/or date
-def tidy_files(files_loc, order, recursive=False, depth=2):
-    all_files = []
-    if recursive:
-        for root, _, files in os.walk(files_loc):
-            if (
-                Path(root).relative_to(files_loc).parts
-                and len(Path(root).relative_to(files_loc).parts) > depth
-            ):
-                continue
-            for file in files:
-                file_path = Path(root) / file
-                if file_path.is_file() and file_path.name not in EXCLUDED_FILES:
-                    all_files.append(file_path)
-    else:
-        all_files = filter_files(list_files(files_loc))
+def move_file(file_path: Path, dest_dir: Path) -> tuple[bool, str | None]:
+    target = dest_dir / file_path.name
 
-    for file in all_files:
-        dest_dir = files_loc / get_destination(file, order)
+    if file_path.resolve() == target.resolve():
+        return False, f"Skipping {file_path}: already in destination."
+
+    if target.exists():
+        return False, (
+            f"Skipping {file_path}: destination already contains {target.name} at {dest_dir}."
+        )
+
+    shutil.move(str(file_path), str(target))
+    return True, None
+
+
+def tidy_files(files_loc: Path, order: str, recursive: bool = False, depth: int = 2) -> None:
+    all_files = iter_recursive_files(files_loc, depth) if recursive else list_files(files_loc)
+
+    for file_path in all_files:
+        dest_dir = files_loc / get_destination(file_path, order)
         create_directory(dest_dir)
-        move_file(file, dest_dir)
+        moved, reason = move_file(file_path, dest_dir)
+        if not moved and reason:
+            print(reason)
 
 
-# Parse the arguments from the command line and return the verbose on error
-def parse_arguments():
+def determine_order(axis_order: list[str]) -> str:
+    return "-" + "".join(axis_order)
+
+
+def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace) -> argparse.Namespace:
+    axis_order = getattr(args, "axis_order", [])
+    if not axis_order:
+        parser.error("You must provide at least one organizing axis: -d and/or -e.")
+
+    if args.depth is not None and not args.rearrange:
+        parser.error("-L/--depth requires -r/--rearrange.")
+
+    if args.rearrange and args.depth is None:
+        args.depth = 2
+
+    if args.depth is not None and args.depth < 0:
+        parser.error("-L/--depth must be >= 0.")
+
+    args.order = determine_order(axis_order)
+    return args
+
+
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Organize files by extension and/or date.",
         epilog="Examples:\n"
-        "  tidyup -e /path/to/dir       Organize by extension\n"
-        "  tidyup -d /path/to/dir       Organize by date\n"
-        "  tidyup -ed /path/to/dir      Organize by extension and date\n"
-        "  tidyup -de /path/to/dir      Organize by date and extension\n"
-        "  tidyup -r -d  -L 2 /path/to/dir       Rearrange files recursively",
+        "  tidyup -e /path/to/dir                  Organize by extension\n"
+        "  tidyup -d /path/to/dir                  Organize by date\n"
+        "  tidyup -ed /path/to/dir                 Organize by extension then date\n"
+        "  tidyup -de /path/to/dir                 Organize by date then extension\n"
+        "  tidyup -r -e /path/to/dir               Recursive extension organize (default depth 2)\n"
+        "  tidyup -r -d /path/to/dir               Recursive date organize (default depth 2)\n"
+        "  tidyup -r -L 3 -e /path/to/dir          Recursive extension organize with explicit depth\n"
+        "  tidyup -r -L 3 -d /path/to/dir          Recursive date organize with explicit depth",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("directory", type=str, help="Directory to organize")
-    parser.add_argument("-e", action="store_true", help="Organize by extension")
-    parser.add_argument("-d", action="store_true", help="Organize by date")
+    parser.add_argument(
+        "-e",
+        nargs=0,
+        action=OrderedAxisAction,
+        default=False,
+        help="Organize by extension",
+    )
+    parser.add_argument(
+        "-d",
+        nargs=0,
+        action=OrderedAxisAction,
+        default=False,
+        help="Organize by date",
+    )
     parser.add_argument(
         "-r", "--rearrange", action="store_true", help="Rearrange files recursively"
     )
     parser.add_argument(
         "-L", "--depth", type=int, help="Depth of subdirectory traversal"
     )
+    return parser
 
-    return parser.parse_args()
+
+def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return validate_arguments(parser, args)
