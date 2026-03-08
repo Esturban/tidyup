@@ -46,12 +46,24 @@ class OrderedAxisAction(argparse.Action):
         setattr(namespace, self.dest, True)
 
 
-def is_eligible_file(file_path: Path) -> bool:
+def has_hidden_ancestor_within_root(file_path: Path, root: Path) -> bool:
+    try:
+        relative_parts = file_path.relative_to(root).parts[:-1]
+    except ValueError:
+        return False
+
+    return any(part.startswith(".") for part in relative_parts)
+
+
+def is_eligible_file(file_path: Path, root: Path | None = None) -> bool:
     if not file_path.is_file():
         return False
 
     # Hidden files are excluded by default.
     if file_path.name.startswith("."):
+        return False
+
+    if root is not None and has_hidden_ancestor_within_root(file_path, root):
         return False
 
     if file_path.name in EXCLUDED_FILES:
@@ -66,7 +78,7 @@ def is_eligible_file(file_path: Path) -> bool:
 
 def list_files(files_loc: Path) -> list[Path]:
     return sorted(
-        (file_path for file_path in files_loc.iterdir() if is_eligible_file(file_path)),
+        (file_path for file_path in files_loc.iterdir() if is_eligible_file(file_path, root=files_loc)),
         key=lambda file_path: file_path.name,
     )
 
@@ -81,7 +93,7 @@ def iter_recursive_files(files_loc: Path, depth: int) -> list[Path]:
         if relative_depth > depth:
             continue
 
-        if is_eligible_file(file_path):
+        if is_eligible_file(file_path, root=files_loc):
             collected.append(file_path)
 
     return sorted(
