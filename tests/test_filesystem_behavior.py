@@ -31,6 +31,34 @@ def test_tidy_files_recursive_uses_same_exclusion_rules(tmp_path: Path):
     assert (nested / "config.json").exists()
 
 
+def test_tidy_files_recursive_skips_files_under_hidden_directories(tmp_path: Path):
+    hidden_dir = tmp_path / ".hidden_dir"
+    hidden_dir.mkdir()
+    hidden_file = hidden_dir / "hidden.txt"
+    visible_file = tmp_path / "visible.txt"
+    hidden_file.write_text("hidden")
+    visible_file.write_text("visible")
+
+    tidy_files(tmp_path, "-e", recursive=True, depth=2)
+
+    assert hidden_file.exists()
+    assert (tmp_path / "txt" / "visible.txt").exists()
+
+
+def test_tidy_files_recursive_skips_nested_files_under_hidden_directories(tmp_path: Path):
+    nested_hidden_dir = tmp_path / ".hidden_dir" / "nested"
+    nested_hidden_dir.mkdir(parents=True)
+    hidden_file = nested_hidden_dir / "hidden.txt"
+    visible_file = tmp_path / "visible.txt"
+    hidden_file.write_text("hidden")
+    visible_file.write_text("visible")
+
+    tidy_files(tmp_path, "-e", recursive=True, depth=3)
+
+    assert hidden_file.exists()
+    assert (tmp_path / "txt" / "visible.txt").exists()
+
+
 def test_discover_files_has_cross_mode_policy_parity_for_same_scope(tmp_path: Path):
     top_level = tmp_path / "top.txt"
     hidden = tmp_path / ".hidden"
