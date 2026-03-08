@@ -30,7 +30,7 @@ USAGE_EXAMPLES = [
 ]
 
 SAFETY_NOTES = [
-    "Dotfiles and excluded config/workspace files are skipped in all modes.",
+    "Dotfiles, hidden-directory contents, and excluded config/workspace files are skipped.",
     "Files are grouped by their final suffix, so archive.tar.gz is treated as .gz.",
     "Existing destination files are never overwritten; collisions are skipped and reported.",
 ]

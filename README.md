@@ -43,6 +43,7 @@ Order is preserved:
 By default, tidyup excludes:
 
 - hidden files (dotfiles)
+- files under hidden directories during recursive traversal
 - names/suffixes in the internal exclusion list (for example `requirements.txt`, `config.json`)
 - files without an extension
 - multi-extension files are grouped by their final suffix (for example `archive.tar.gz` goes to `gz/`)
