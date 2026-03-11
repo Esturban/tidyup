@@ -3,8 +3,12 @@
 .Rproj.user
 *.code-workspace
 __pycache__
+.pytest_cache/
 *.egg-info*
 dist
+.venv/
+venv/
+.vscode/
 **.env
 # Internal planning specs
 docs/specs/
