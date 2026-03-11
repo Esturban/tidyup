@@ -43,6 +43,7 @@ Order is preserved:
 By default, tidyup excludes:
 
 - hidden files (dotfiles)
+- files under hidden directories during recursive traversal
 - names/suffixes in the internal exclusion list (for example `requirements.txt`, `config.json`)
 - files without an extension
 - multi-extension files are grouped by their final suffix (for example `archive.tar.gz` goes to `gz/`)
@@ -87,6 +88,33 @@ Run the same baseline checks locally that CI uses before release or publishing:
 
 ```bash
 python3 -m pip install -e .[test] || python3 -m pip install -e . pytest
+python3 -m pytest -q
+python3 -m tidyup -h
+```
+
+## Maintainer Notes
+
+### Repo Map
+
+- `tidyup/tidyup.py`: CLI entrypoint and top-level directory validation
+- `tidyup/utils.py`: argument parsing, file discovery, exclusion rules, destination planning, and move behavior
+- `tidyup/__init__.py`: package version resolution and `python -m tidyup` runtime entry wiring
+
+### Test Map
+
+- `tests/test_cli_docs.py`: keeps README and parser help output in sync
+- `tests/test_filesystem_behavior.py`: covers file selection, recursion, collisions, and ordering behavior
+- `tests/test_packaging.py`: covers version fallback and installed-module entrypoint behavior
+- `tests/test_parser_contract.py`: locks supported CLI flag combinations and validation rules
+
+### Workflow Map
+
+- `.github/workflows/pr-to-prod.yml`: opens or updates the automation PR from `dev*` branches into `master`
+- `.github/workflows/publish-to-pypi.yml`: builds distributions on push, publishes to TestPyPI from `dev`, and publishes to PyPI only for tags
+
+### Quick Validation
+
+```bash
 python3 -m pytest -q
 python3 -m tidyup -h
 ```
