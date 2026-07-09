@@ -12,3 +12,4 @@ venv/
 **.env
 # Internal planning specs
 docs/specs/
+.codegraph/
